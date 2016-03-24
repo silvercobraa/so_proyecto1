@@ -133,65 +133,80 @@ int main (int argc, char *argv[])
 		}
 		tokens[i] = NULL;
 		tokens[MAX_TOKENS] = NULL;
-		//printf("Arreglo: [ ");
-		//for (j = 0; tokens[j] != NULL; j++)
-		//{
-		//	printf("%s, ", tokens[j]);
-		//}
-		//printf("]\n");
-		posicion_pipe = buscar_pipe(tokens);
-		if (posicion_pipe > 0)
+
+
+		t_inicio = time(NULL);
+
+		pid = fork();
+
+		if (pid == 0)
 		{
-			printf("SE ENCONTRÓ UN PIPE!\n");
-			for (j = 0; j < posicion_pipe; j += 1)
+			posicion_pipe = buscar_pipe(tokens);
+			if (posicion_pipe > 0)
 			{
-				comando1[j] = tokens[j];
-			}
-			comando1[posicion_pipe] = NULL;
-
-			for (j = posicion_pipe + 1; ; j += 1)
-			{
-				if (tokens[j] == NULL)
+				printf("SE ENCONTRÓ UN PIPE!\n");
+				for (j = 0; j < posicion_pipe; j += 1)
 				{
-					comando2[j - (posicion_pipe + 1)] = NULL;
-					break;
+					comando1[j] = tokens[j];
 				}
-				comando2[j - (posicion_pipe + 1)] = tokens[j];
+				comando1[posicion_pipe] = NULL;
+
+				for (j = posicion_pipe + 1; ; j += 1)
+				{
+					if (tokens[j] == NULL)
+					{
+						comando2[j - (posicion_pipe + 1)] = NULL;
+						break;
+					}
+					comando2[j - (posicion_pipe + 1)] = tokens[j];
+				}
+				printf("COMANDO1: ");
+				imprimir_arreglo(comando1);
+				printf("COMANDO2: ");
+				imprimir_arreglo(comando2);
+				// aqui habria que volver a forkear para poder usar los pipes. De
+				// momento solo se ejecutara el primer comando.
+				printf("(pipes aún no implementados, se ejecutará solo el primer comando)\n");
+				if (execvp(comando1[0], comando1) == -1)
+				{
+					exit(-1);
+				}
+
 			}
-			printf("COMANDO1: ");
-			imprimir_arreglo(comando1);
-			printf("COMANDO2: ");
-			imprimir_arreglo(comando2);
-			//exit(-1);
+			/**
+			 * Si esto sucede, es porque el pipe se encontraba al inicio.
+			 */
+			else if (posicion_pipe == 0)
+			{
+				printf("ERROR: FALTA UN COMANDO\n");
+				exit(-1);
+			}
+			else
+			{
+				printf("(Si esto se ejecuta es porque el string no contenía pipes.)\n");
+				if (execvp(tokens[0], tokens) == -1)
+				{
+					printf("ERROR: comando no reconocido (Si se imprime esto es porque execvp retornó -1)\n");
+
+					/**
+					 * Si falla hay que salir del programa porque si no el proceso
+					 * hijo queda ahí incluso cuando el programa originial termina.
+					 */
+					exit(-1);
+				}
+			}
 		}
-
-
-		//t_inicio = time(NULL);
-		//pid = fork();
-		//if (pid == 0)
-		//{
-		//	if (execvp(tokens[0], tokens) == -1)
-		//	{
-		//		printf("ERROR: comando no reconocido (Si se imprime esto es porque execvp retornó -1)\n");
-//
-		//		/**
-		//		 * Si falla hay que salir del programa porque si no el proceso
-		//		 * hijo queda ahí incluso cuando el programa originial termina.
-		//		 */
-		//		exit(-1);
-		//	}
-		//}
-		//else if (pid < 0)
-		//{
-		//	printf("ERROR: No se pudo hacer el fork\n");
-		//	exit(-1);
-		//}
-		//else
-		//{
-		//	wait();
-		//	t_fin = time(NULL);
-		//	printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
-		//}
+		else if (pid < 0)
+		{
+			printf("ERROR: No se pudo hacer el fork\n");
+			exit(-1);
+		}
+		else
+		{
+			wait();
+			t_fin = time(NULL);
+			printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
+		}
 		i = 0;
 	}
 	return 0;
