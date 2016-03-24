@@ -46,6 +46,19 @@ int buscar_pipe(char** arreglo)
 	return -1;
 }
 
+/**
+ * Imprime los strings del arreglo hasta que encuentra nulo.
+ */
+void imprimir_arreglo(char** arreglo)
+{
+	int i;
+	for (i = 0; arreglo[i] != NULL; i++)
+	{
+		printf("%s, ", arreglo[i]);
+	}
+	printf("\n");
+}
+
 int main (int argc, char *argv[])
 {
 	signal(SIGINT, sigintHandler);
@@ -129,7 +142,7 @@ int main (int argc, char *argv[])
 		posicion_pipe = buscar_pipe(tokens);
 		if (posicion_pipe > 0)
 		{
-			printf("Se encontró un pipe!\n");
+			printf("SE ENCONTRÓ UN PIPE!\n");
 			for (j = 0; j < posicion_pipe; j += 1)
 			{
 				comando1[j] = tokens[j];
@@ -140,24 +153,15 @@ int main (int argc, char *argv[])
 			{
 				if (tokens[j] == NULL)
 				{
-					printf("parece que esto no se ejecuta\n");
 					comando2[j - (posicion_pipe + 1)] = NULL;
 					break;
 				}
 				comando2[j - (posicion_pipe + 1)] = tokens[j];
 			}
-			printf("COMANDO1:");
-			for (j = 0; comando1[j] != NULL; j += 1)
-			{
-				printf("%s, ", comando1[j]);
-			}
-			printf("\n");
-			printf("COMANDO2:");
-			for (j = 0; comando2[j] != NULL; j += 1)
-			{
-				printf("%s, ", comando2[j]);
-			}
-			printf("\n");
+			printf("COMANDO1: ");
+			imprimir_arreglo(comando1);
+			printf("COMANDO2: ");
+			imprimir_arreglo(comando2);
 			//exit(-1);
 		}
 
