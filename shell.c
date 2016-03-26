@@ -96,6 +96,7 @@ int main (int argc, char *argv[])
 	int i = 0;
 	int j = 0;
 	int posicion_pipe = -1;
+	int des_p[2];
 	time_t t_inicio;
 	time_t t_fin;
 
@@ -166,11 +167,44 @@ int main (int argc, char *argv[])
 				imprimir_arreglo(comando2);
 				// aqui habria que volver a forkear para poder usar los pipes. De
 				// momento solo se ejecutara el primer comando.
-				printf("(pipes aún no implementados, se ejecutará solo el primer comando)\n");
-				if (execvp(comando1[0], comando1) == -1)
-				{
-					exit(-1);
+				//printf("(pipes aún no implementados, se ejecutará solo el primer comando)\n");
+				//if (execvp(comando1[0], comando1) == -1)
+				//{
+				//	exit(-1);
+				//}
+				if(pipe(des_p) == -1) {
+					perror("Pipe failed");
+					exit(1);
 				}
+
+				if(fork() == 0)            //first fork
+				{
+					close(STDOUT_FILENO);  //closing stdout
+					dup(des_p[1]);         //replacing stdout with pipe write
+					close(des_p[0]);       //closing pipe read
+					close(des_p[1]);
+
+					execvp(comando1[0], comando1);
+					perror("execvp of comando1 failed");
+					exit(1);
+				}
+
+				if(fork() == 0)            //creating 2nd child
+				{
+					close(STDIN_FILENO);   //closing stdin
+					dup(des_p[0]);         //replacing stdin with pipe read
+					close(des_p[1]);       //closing pipe write
+					close(des_p[0]);
+
+					execvp(comando2[0], comando2);
+					perror("execvp of comando2 failed");
+					exit(1);
+				}
+
+				close(des_p[0]);
+				close(des_p[1]);
+				wait(0);
+				wait(0);
 
 			}
 			/**
@@ -209,5 +243,3 @@ int main (int argc, char *argv[])
 		}
 		i = 0;
 	}
-	return 0;
-}
