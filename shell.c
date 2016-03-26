@@ -161,10 +161,11 @@ int main (int argc, char *argv[])
 					}
 					comando2[j - (posicion_pipe + 1)] = tokens[j];
 				}
-				printf("COMANDO1: ");
-				imprimir_arreglo(comando1);
-				printf("COMANDO2: ");
-				imprimir_arreglo(comando2);
+				//printf("COMANDO1: ");
+				//imprimir_arreglo(comando1);
+				//printf("COMANDO2: ");
+				//imprimir_arreglo(comando2);
+
 				// aqui habria que volver a forkear para poder usar los pipes. De
 				// momento solo se ejecutara el primer comando.
 				//printf("(pipes aún no implementados, se ejecutará solo el primer comando)\n");
@@ -172,11 +173,16 @@ int main (int argc, char *argv[])
 				//{
 				//	exit(-1);
 				//}
-				if(pipe(des_p) == -1) {
-					perror("Pipe failed");
+				if(pipe(des_p) == -1)
+				{
+					perror("Falló el pipe");
 					exit(1);
 				}
 
+				/**
+				 * Se crea un hijo del proceso hijo (nieto?), que ejecutará el primer
+				 * comando y escribirá en el pipe.
+				 */
 				if(fork() == 0)            //first fork
 				{
 					close(STDOUT_FILENO);  //closing stdout
@@ -185,10 +191,14 @@ int main (int argc, char *argv[])
 					close(des_p[1]);
 
 					execvp(comando1[0], comando1);
-					perror("execvp of comando1 failed");
+					perror("Falló el execvp del comando 1");
 					exit(1);
 				}
 
+				/**
+				 * Se crea otro hijo del proceso hijo, que ejecutará el segundo
+				 * comando y leerá en el pipe.
+				 */
 				if(fork() == 0)            //creating 2nd child
 				{
 					close(STDIN_FILENO);   //closing stdin
@@ -197,14 +207,20 @@ int main (int argc, char *argv[])
 					close(des_p[0]);
 
 					execvp(comando2[0], comando2);
-					perror("execvp of comando2 failed");
+					perror("Falló el execvp del comando 2");
 					exit(1);
 				}
 
 				close(des_p[0]);
 				close(des_p[1]);
+
+				/**
+				 * Aquí hay dos wait para que se espere que terminen los 2 comandos.
+				 */
 				wait(0);
 				wait(0);
+				exit(0);
+				printf("Exito!!!\n");
 
 			}
 			/**
@@ -243,3 +259,7 @@ int main (int argc, char *argv[])
 		}
 		i = 0;
 	}
+	return 0;
+}
+
+//
