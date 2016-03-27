@@ -100,7 +100,7 @@ int main (int argc, char *argv[])
 	time_t t_inicio;
 	time_t t_fin;
 
-	pid_t pid;
+	//pid_t pid;
 
 	checkear_malloc(string_leida);
 	checkear_malloc(aux);
@@ -121,7 +121,7 @@ int main (int argc, char *argv[])
 		 * Por alguna razón los comandos no funcionan cuando terminan con salto
 		 * de línea. Por lo tanto, hay que eliminarlo.
 		 */
-		aux[strlen(string_leida) - 1] = '\0';
+		aux[strlen(aux) - 1] = '\0';
 
 		if (!strcmp(aux, "exit"))
 		{
@@ -136,123 +136,142 @@ int main (int argc, char *argv[])
 		tokens[MAX_TOKENS] = NULL;
 
 
-		t_inicio = time(NULL);
 
-		pid = fork();
+		posicion_pipe = buscar_pipe(tokens);
 
-		if (pid == 0)
+		//t_inicio = time(NULL);
+		/**
+		 * Si hay pipe, se forkea 2 veces y se ejecutan 2 comandos.
+		 */
+		if (posicion_pipe > 0)
 		{
-			posicion_pipe = buscar_pipe(tokens);
-			if (posicion_pipe > 0)
+			printf("SE ENCONTRÓ UN PIPE!\n");
+			for (j = 0; j < posicion_pipe; j += 1)
 			{
-				printf("SE ENCONTRÓ UN PIPE!\n");
-				for (j = 0; j < posicion_pipe; j += 1)
+				comando1[j] = tokens[j];
+			}
+			comando1[posicion_pipe] = NULL;
+
+			for (j = posicion_pipe + 1; ; j += 1)
+			{
+				if (tokens[j] == NULL)
 				{
-					comando1[j] = tokens[j];
+					comando2[j - (posicion_pipe + 1)] = NULL;
+					break;
 				}
-				comando1[posicion_pipe] = NULL;
+				comando2[j - (posicion_pipe + 1)] = tokens[j];
+			}
+			printf("COMANDO1: ");
+			imprimir_arreglo(comando1);
+			printf("COMANDO2: ");
+			imprimir_arreglo(comando2);
 
-				for (j = posicion_pipe + 1; ; j += 1)
-				{
-					if (tokens[j] == NULL)
-					{
-						comando2[j - (posicion_pipe + 1)] = NULL;
-						break;
-					}
-					comando2[j - (posicion_pipe + 1)] = tokens[j];
-				}
-				//printf("COMANDO1: ");
-				//imprimir_arreglo(comando1);
-				//printf("COMANDO2: ");
-				//imprimir_arreglo(comando2);
+			// aqui habria que volver a forkear para poder usar los pipes. De
+			// momento solo se ejecutara el primer comando.
+			//printf("(pipes aún no implementados, se ejecutará solo el primer comando)\n");
+			//if (execvp(comando1[0], comando1) == -1)
+			//{
+			//	exit(-1);
+			//}}
 
-				// aqui habria que volver a forkear para poder usar los pipes. De
-				// momento solo se ejecutara el primer comando.
-				//printf("(pipes aún no implementados, se ejecutará solo el primer comando)\n");
-				//if (execvp(comando1[0], comando1) == -1)
-				//{
-				//	exit(-1);
-				//}
-				if(pipe(des_p) == -1)
-				{
-					perror("Falló el pipe");
-					exit(1);
-				}
+			/**
+			 * Si falla al crear el pipe, salimos del programa.
+			 */
+			if(pipe(des_p) == -1)
+			{
+				perror("Falló el pipe");
+				exit(1);
+			}
 
-				/**
-				 * Se crea un hijo del proceso hijo (nieto?), que ejecutará el primer
-				 * comando y escribirá en el pipe.
-				 */
-				if(fork() == 0)            //first fork
-				{
-					close(STDOUT_FILENO);  //closing stdout
-					dup(des_p[1]);         //replacing stdout with pipe write
-					close(des_p[0]);       //closing pipe read
-					close(des_p[1]);
-
-					execvp(comando1[0], comando1);
-					perror("Falló el execvp del comando 1");
-					exit(1);
-				}
-
-				/**
-				 * Se crea otro hijo del proceso hijo, que ejecutará el segundo
-				 * comando y leerá en el pipe.
-				 */
-				if(fork() == 0)            //creating 2nd child
-				{
-					close(STDIN_FILENO);   //closing stdin
-					dup(des_p[0]);         //replacing stdin with pipe read
-					close(des_p[1]);       //closing pipe write
-					close(des_p[0]);
-
-					execvp(comando2[0], comando2);
-					perror("Falló el execvp del comando 2");
-					exit(1);
-				}
-
-				close(des_p[0]);
+			t_inicio = time(NULL);
+			/**
+			 * Se crea un proceso hijo, que ejecutará el primer comando y
+			 * escribirá en el pipe.
+			 */
+			if(fork() == 0)            //first fork
+			{
+				close(STDOUT_FILENO);  //closing stdout
+				dup(des_p[1]);         //replacing stdout with pipe write
+				close(des_p[0]);       //closing pipe read
 				close(des_p[1]);
 
-				/**
-				 * Aquí hay dos wait para que se espere que terminen los 2 comandos.
-				 */
-				wait(0);
-				wait(0);
-				exit(0);
-				printf("Exito!!!\n");
-
+				execvp(comando1[0], comando1);
+				perror("Falló el execvp del comando 1");
+				exit(1);
 			}
+
 			/**
-			 * Si esto sucede, es porque el pipe se encontraba al inicio.
+			 * Se crea otro proceso hijo, que ejecutará el segundo comando y
+			 * leerá en el pipe.
 			 */
-			else if (posicion_pipe == 0)
+			if(fork() == 0)            //creating 2nd child
 			{
-				printf("ERROR: FALTA UN COMANDO\n");
-				exit(-1);
-			}
-			else
-			{
-				printf("(Si esto se ejecuta es porque el string no contenía pipes.)\n");
-				if (execvp(tokens[0], tokens) == -1)
-				{
-					printf("ERROR: comando no reconocido (Si se imprime esto es porque execvp retornó -1)\n");
+				close(STDIN_FILENO);   //closing stdin
+				dup(des_p[0]);         //replacing stdin with pipe read
+				close(des_p[1]);       //closing pipe write
+				close(des_p[0]);
 
-					/**
-					 * Si falla hay que salir del programa porque si no el proceso
-					 * hijo queda ahí incluso cuando el programa originial termina.
-					 */
-					exit(-1);
-				}
+				execvp(comando2[0], comando2);
+				perror("Falló el execvp del comando 2");
+				exit(1);
 			}
+
+			close(des_p[0]);
+			close(des_p[1]);
+
+			/**
+			 * Aquí el proceso principal espera que terminen los 2 comandos.
+			 */
+			wait(0);
+			wait(0);
+			t_fin = time(NULL);
+			//exit(0);
+			printf("Exito!!!\n");
+			printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
 		}
-		else if (pid < 0)
+
+		/**
+		 * Si esto sucede, es porque el pipe se encontraba al inicio.
+		 */
+		else if (posicion_pipe == 0)
 		{
-			printf("ERROR: No se pudo hacer el fork\n");
-			exit(-1);
+			printf("ERROR: FALTA UN COMANDO\n");
+			//exit(-1);
 		}
+		//else
+		//{
+		//	printf("(Si esto se ejecuta es porque el string no contenía pipes.)\n");
+		//	if (execvp(tokens[0], tokens) == -1)
+		//	{
+		//		printf("ERROR: comando no reconocido (Si se imprime esto es porque execvp retornó -1)\n");
+//
+		//		/**
+		//		 * Si falla hay que salir del programa porque si no el proceso
+		//		 * hijo queda ahí incluso cuando el programa originial termina.
+		//		 */
+		//		exit(-1);
+		//	}
+		//}
+
+		/**
+		 * Si no hay pipe, se ejecuta el comando completo.
+		 */
 		else
 		{
+			t_inicio = time(NULL);
+
+			/**
+			 * Proceso hijo que ejecuta el comando, o termina si falla.
+			 */
+			if (fork() == 0)
+			{
+				execvp(tokens[0], tokens);
+				perror("Falló el execvp de tokens");
+				exit(-1);
+			}
+			/**
+			 * Proceso principal, que espera al proceso hijo anterior.
+			 */
 			wait();
 			t_fin = time(NULL);
 			printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
