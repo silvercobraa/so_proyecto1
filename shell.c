@@ -90,8 +90,8 @@ int main (int argc, char *argv[])
 	char* tokens[MAX_TOKENS + 1];
 	char* comando1[MAX_TOKENS + 1];
 	char* comando2[MAX_TOKENS + 1];
-
 	char* token = NULL;
+
 
 	int i = 0;
 	int j = 0;
@@ -100,10 +100,17 @@ int main (int argc, char *argv[])
 	time_t t_inicio;
 	time_t t_fin;
 
-	//pid_t pid;
+	FILE* mi_shell_log = fopen("mishell.log", "a+");
+	if (mi_shell_log == NULL)
+	{
+		puts("No se pudo crear el archivo Log/mishell.log");
+		exit(-1);
+	}
+
 
 	checkear_malloc(string_leida);
 	checkear_malloc(aux);
+
 
 	printf("%s", MENSAJE_INICIAL);
 	while (1)
@@ -125,6 +132,9 @@ int main (int argc, char *argv[])
 
 		if (!strcmp(aux, "exit"))
 		{
+			fclose(mi_shell_log);
+			free(string_leida);
+			free(aux);
 			exit(-1);
 		}
 		while ((token = strsep(&aux, " ")) != NULL)
@@ -177,7 +187,7 @@ int main (int argc, char *argv[])
 			/**
 			 * Si falla al crear el pipe, salimos del programa.
 			 */
-			if(pipe(des_p) == -1)
+			if (pipe(des_p) == -1)
 			{
 				perror("Falló el pipe");
 				exit(1);
@@ -188,7 +198,7 @@ int main (int argc, char *argv[])
 			 * Se crea un proceso hijo, que ejecutará el primer comando y
 			 * escribirá en el pipe.
 			 */
-			if(fork() == 0)            //first fork
+			if (fork() == 0)            //first fork
 			{
 				close(STDOUT_FILENO);  //closing stdout
 				dup(des_p[1]);         //replacing stdout with pipe write
@@ -204,7 +214,7 @@ int main (int argc, char *argv[])
 			 * Se crea otro proceso hijo, que ejecutará el segundo comando y
 			 * leerá en el pipe.
 			 */
-			if(fork() == 0)            //creating 2nd child
+			if (fork() == 0)            //creating 2nd child
 			{
 				close(STDIN_FILENO);   //closing stdin
 				dup(des_p[0]);         //replacing stdin with pipe read
@@ -277,6 +287,7 @@ int main (int argc, char *argv[])
 			printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
 		}
 		i = 0;
+		fprintf(mi_shell_log, "%s", string_leida);
 	}
 	return 0;
 }
