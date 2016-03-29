@@ -75,7 +75,18 @@ int main (int argc, char *argv[])
 	 */
 	int MAX_TOKENS = (LARGO_MAX_COMANDO - 1)/2 + LARGO_MAX_COMANDO%2;
 
-	const char* const MENSAJE_INICIAL = "SHELL 100% REAL NO FAKE 1 LINK\n autor: César Bolívar Severino\n\n Ingrese un comando o ingrese 'exit' para salir.\n\n";
+	const char* const MENSAJE_INICIAL = " ____  _          _ _   _  ___   ___ _  __  ____            _   _   _       \n" \
+										"/ ___|| |__   ___| | | / |/ _ \\ / _ (_)/ / |  _ \\ ___  __ _| | | \\ | | ___  \n" \
+										"\\___ \\| '_ \\ / _ \\ | | | | | | | | | |/ /  | |_) / _ \\/ _` | | |  \\| |/ _ \\ \n" \
+										" ___) | | | |  __/ | | | | |_| | |_| / /_  |  _ <  __/ (_| | | | |\\  | (_) |\n" \
+										"|____/|_| |_|\\___|_|_| |_|\\___/ \\___/_/(_) |_| \\_\\___|\\__,_|_| |_| \\_|\\___/ \n" \
+										"										                                    \n" \
+										" _____     _        \n" \
+										"|  ___|_ _| | _____ \n" \
+										"| |_ / _` | |/ / _ \\\n" \
+										"|  _| (_| |   <  __/\n" \
+										"|_|  \\__,_|_|\\_\\___|\n\n" \
+                    					"Autor: César Bolívar Severino\n\nIngrese un comando o ingrese 'exit' para salir.\n\n";
 	char* string_leida = malloc(LARGO_MAX_COMANDO);
 
 	/**
