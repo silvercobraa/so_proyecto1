@@ -66,7 +66,7 @@ int main (int argc, char *argv[])
 	/**
 	 * Incluyendo el caracter nulo.
 	 */
-	int LARGO_MAX_COMANDO = 1000;
+	const int LARGO_MAX_COMANDO = 1000;
 
 	/**
 	 * La cantidad máxima de palabras que puede haber es la cantidad de
@@ -86,7 +86,24 @@ int main (int argc, char *argv[])
 										"| |_ / _` | |/ / _ \\\n" \
 										"|  _| (_| |   <  __/\n" \
 										"|_|  \\__,_|_|\\_\\___|\n\n" \
-										"Autor: César Bolívar Severino\n\nIngrese un comando o ingrese 'exit' para salir.\n\n";
+										"███████▀▀▀░░░░░░░▀▀▀███████\n" \
+										"████▀░░░░░░░░░░░░░░░░░▀████\n" \
+										"███│░░░░░░░░░░░░░░░░░░░│███\n" \
+										"██▌│░░░░░░░░░░░░░░░░░░░│▐██\n" \
+										"██░└┐░░░░░░░░░░░░░░░░░┌┘░██\n" \
+										"██░░└┐░░░░░░░░░░░░░░░┌┘░░██\n" \
+										"██░░┌┘▄▄▄▄▄░░░░░▄▄▄▄▄└┐░░██\n" \
+										"██▌░│██████▌░░░▐██████│░▐██\n" \
+										"███░│▐███▀▀░░▄░░▀▀███▌│░███\n" \
+										"██▀─┘░░░░░░░▐█▌░░░░░░░└─▀██\n" \
+										"██▄░░░▄▄▄▓░░▀█▀░░▓▄▄▄░░░▄██\n" \
+										"████▄─┘██▌░░░░░░░▐██└─▄████\n" \
+										"█████░░▐█─┬┬┬┬┬┬┬─█▌░░█████\n" \
+										"████▌░░░▀┬┼┼┼┼┼┼┼┬▀░░░▐████\n" \
+										"█████▄░░░└┴┴┴┴┴┴┴┘░░░▄█████\n\n" \
+										"Autor: César Bolívar Severino\n\n" \
+										"Ingrese un comando, ingrese 'historial' para ver los comandos previamente usados\ncd" \
+										"o ingrese 'exit' para salir.\n\n";
 	char* string_leida = malloc(LARGO_MAX_COMANDO);
 
 	/**
@@ -107,7 +124,7 @@ int main (int argc, char *argv[])
 	int i = 0;
 	int j = 0;
 	int posicion_pipe = -1;
-	int des_p[2];
+	int pipefd[2];
 	time_t t_inicio;
 	time_t t_fin;
 
@@ -190,7 +207,7 @@ int main (int argc, char *argv[])
 			/**
 			 * Si falla al crear el pipe, salimos del programa.
 			 */
-			if (pipe(des_p) == -1)
+			if (pipe(pipefd) == -1)
 			{
 				perror("Falló el pipe");
 				exit(1);
@@ -204,9 +221,9 @@ int main (int argc, char *argv[])
 			if (fork() == 0)            //first fork
 			{
 				close(STDOUT_FILENO);  //closing stdout
-				dup(des_p[1]);         //replacing stdout with pipe write
-				close(des_p[0]);       //closing pipe read
-				close(des_p[1]);
+				dup(pipefd[1]);         //replacing stdout with pipe write
+				close(pipefd[0]);       //closing pipe read
+				close(pipefd[1]);
 
 				execvp(comando1[0], comando1);
 				perror("Falló el execvp del comando 1");
@@ -220,17 +237,17 @@ int main (int argc, char *argv[])
 			if (fork() == 0)            //creating 2nd child
 			{
 				close(STDIN_FILENO);   //closing stdin
-				dup(des_p[0]);         //replacing stdin with pipe read
-				close(des_p[1]);       //closing pipe write
-				close(des_p[0]);
+				dup(pipefd[0]);         //replacing stdin with pipe read
+				close(pipefd[1]);       //closing pipe write
+				close(pipefd[0]);
 
 				execvp(comando2[0], comando2);
 				perror("Falló el execvp del comando 2");
 				exit(1);
 			}
 
-			close(des_p[0]);
-			close(des_p[1]);
+			close(pipefd[0]);
+			close(pipefd[1]);
 
 			/**
 			 * Aquí el proceso principal espera que terminen los 2 comandos.
