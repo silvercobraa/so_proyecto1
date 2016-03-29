@@ -75,7 +75,18 @@ int main (int argc, char *argv[])
 	 */
 	int MAX_TOKENS = (LARGO_MAX_COMANDO - 1)/2 + LARGO_MAX_COMANDO%2;
 
-	const char* const MENSAJE_INICIAL = "SHELL 100% REAL NO FAKE 1 LINK\n autor: César Bolívar Severino\n\n Ingrese un comando o ingrese 'exit' para salir.\n\n";
+	const char* const MENSAJE_INICIAL = " ____  _          _ _   _  ___   ___ _  __  ____            _   _   _       \n" \
+										"/ ___|| |__   ___| | | / |/ _ \\ / _ (_)/ / |  _ \\ ___  __ _| | | \\ | | ___  \n" \
+										"\\___ \\| '_ \\ / _ \\ | | | | | | | | | |/ /  | |_) / _ \\/ _` | | |  \\| |/ _ \\ \n" \
+										" ___) | | | |  __/ | | | | |_| | |_| / /_  |  _ <  __/ (_| | | | |\\  | (_) |\n" \
+										"|____/|_| |_|\\___|_|_| |_|\\___/ \\___/_/(_) |_| \\_\\___|\\__,_|_| |_| \\_|\\___/ \n" \
+										"                                                                            \n" \
+										" _____     _        \n" \
+										"|  ___|_ _| | _____ \n" \
+										"| |_ / _` | |/ / _ \\\n" \
+										"|  _| (_| |   <  __/\n" \
+										"|_|  \\__,_|_|\\_\\___|\n\n" \
+										"Autor: César Bolívar Severino\n\nIngrese un comando o ingrese 'exit' para salir.\n\n";
 	char* string_leida = malloc(LARGO_MAX_COMANDO);
 
 	/**
@@ -176,14 +187,6 @@ int main (int argc, char *argv[])
 			printf("COMANDO2: ");
 			imprimir_arreglo(comando2);
 
-			// aqui habria que volver a forkear para poder usar los pipes. De
-			// momento solo se ejecutara el primer comando.
-			//printf("(pipes aún no implementados, se ejecutará solo el primer comando)\n");
-			//if (execvp(comando1[0], comando1) == -1)
-			//{
-			//	exit(-1);
-			//}}
-
 			/**
 			 * Si falla al crear el pipe, salimos del programa.
 			 */
@@ -236,8 +239,9 @@ int main (int argc, char *argv[])
 			wait(0);
 			t_fin = time(NULL);
 			//exit(0);
-			printf("Exito!!!\n");
+			//printf("Exito!!!\n");
 			printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
+			fprintf(mi_shell_log, "(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
 		}
 
 		/**
@@ -248,20 +252,6 @@ int main (int argc, char *argv[])
 			printf("ERROR: FALTA UN COMANDO\n");
 			//exit(-1);
 		}
-		//else
-		//{
-		//	printf("(Si esto se ejecuta es porque el string no contenía pipes.)\n");
-		//	if (execvp(tokens[0], tokens) == -1)
-		//	{
-		//		printf("ERROR: comando no reconocido (Si se imprime esto es porque execvp retornó -1)\n");
-//
-		//		/**
-		//		 * Si falla hay que salir del programa porque si no el proceso
-		//		 * hijo queda ahí incluso cuando el programa originial termina.
-		//		 */
-		//		exit(-1);
-		//	}
-		//}
 
 		/**
 		 * Si no hay pipe, se ejecuta el comando completo.
@@ -285,8 +275,10 @@ int main (int argc, char *argv[])
 			wait();
 			t_fin = time(NULL);
 			printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
+			fprintf(mi_shell_log, "(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
 		}
 		i = 0;
+		//printf("Valor de i (debiera ser cero): %d\n", i);
 		fprintf(mi_shell_log, "%s", string_leida);
 	}
 	return 0;
