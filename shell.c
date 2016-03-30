@@ -29,6 +29,23 @@ void checkear_malloc(char* puntero)
 	}
 }
 
+void imprimir_historial(const char* nombre_archivo_historial)
+{
+	if (fork() == 0)
+	{
+		char* comando_cat[] = {"cat", nombre_archivo_historial, NULL};
+		execvp(comando_cat[0], comando_cat);
+		perror("No se pudo mostrar el historial\n");
+		exit(-1);
+	}
+	else
+	{
+		wait();
+		printf("\nDone!\n");
+		return;
+	}
+}
+
 /**
  * Retorna true si en el arreglo de strings existe un '|'. Retorna false en otro
  * caso. No se toman precauciones si el arreglo no termina con un puntero nulo.
@@ -104,8 +121,11 @@ int main (int argc, char *argv[])
 										"Autor: César Bolívar Severino\n\n" \
 										"Ingrese un comando, ingrese 'historial' para ver los comandos previamente usados\ncd" \
 										"o ingrese 'exit' para salir.\n\n";
+
 	char* string_leida = malloc(LARGO_MAX_COMANDO);
 
+	const char* const NOMBRE_ARCHIVO_LOG = "mishell.log";
+	const char* const NOMBRE_ARCHIVO_HISTORIAL = ".historial.txt";
 	/**
 	 * Este string es usado para guardar una copia de la string leída, para que
 	 * al usar strsep no se modifique la original.
@@ -121,17 +141,32 @@ int main (int argc, char *argv[])
 	char* token = NULL;
 
 
-	int i = 0;
+	int cantidad_tokens = 0;
 	int j = 0;
 	int posicion_pipe = -1;
 	int pipefd[2];
 	time_t t_inicio;
 	time_t t_fin;
 
-	FILE* mi_shell_log = fopen("mishell.log", "a+");
+	/**
+	 * En este archivo se escriben los comandos utilizados sus respectivos outputs
+	 * y su tiempo de ejecución.
+	 */
+	FILE* mi_shell_log = fopen(NOMBRE_ARCHIVO_LOG, "a+");
+
+	/**
+	 * En este archivo se escriben sólamente los comandos utilizados.
+	 */
+	FILE* archivo_historial = fopen(NOMBRE_ARCHIVO_HISTORIAL, "w");
+
 	if (mi_shell_log == NULL)
 	{
-		puts("No se pudo crear el archivo Log/mishell.log");
+		printf("No se pudo crear el archivo Log/%s\n", NOMBRE_ARCHIVO_LOG);
+		exit(-1);
+	}
+	if (NOMBRE_ARCHIVO_HISTORIAL == NULL)
+	{
+		printf("No se pudo crear el archivo %s\n", NOMBRE_ARCHIVO_HISTORIAL);
 		exit(-1);
 	}
 
@@ -161,16 +196,25 @@ int main (int argc, char *argv[])
 		if (!strcmp(aux, "exit"))
 		{
 			fclose(mi_shell_log);
+			fclose(archivo_historial);
 			free(string_leida);
 			free(aux);
 			exit(-1);
 		}
+		if (!strcmp(aux, "historial"))
+		{
+			fclose(archivo_historial);
+			imprimir_historial(NOMBRE_ARCHIVO_HISTORIAL);
+			archivo_historial = fopen(NOMBRE_ARCHIVO_HISTORIAL, "a");
+			continue;
+		}
+		fprintf( archivo_historial, "%s", aux);
 		while ((token = strsep(&aux, " ")) != NULL)
 		{
-			tokens[i] = strdup(token);
-			i++;
+			tokens[cantidad_tokens] = strdup(token);
+			cantidad_tokens++;
 		}
-		tokens[i] = NULL;
+		tokens[cantidad_tokens] = NULL;
 		tokens[MAX_TOKENS] = NULL;
 
 
@@ -294,7 +338,7 @@ int main (int argc, char *argv[])
 			printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
 			fprintf(mi_shell_log, "(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
 		}
-		i = 0;
+		cantidad_tokens = 0;
 		//printf("Valor de i (debiera ser cero): %d\n", i);
 		fprintf(mi_shell_log, "%s", string_leida);
 	}
