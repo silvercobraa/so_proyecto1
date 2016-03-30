@@ -9,84 +9,37 @@
 
 const char* const PROMPT = "Shell 100% Real No Fake 1 Link >>> ";
 
-void sigintHandler(int sig_num)
-{
-	signal(SIGINT, sigintHandler);
-	printf("\n Esta shell es demasiado chora, no se puede matar con Ctrl-C\n");
-	printf("%s", PROMPT);
-	fflush(stdout);
-}
+/**
+ * Handler de SIGINT.
+ */
+void sigintHandler(int sig_num);
 
 /**
- * Termina el programa si el puntero es nulo.
+ * Termina el programa si el puntero 'puntero' es nulo.
  */
-void checkear_malloc(char* puntero)
-{
-	if (puntero == NULL)
-	{
-		printf("ERROR AL RESERVAR MEMORIA\n");
-		exit(-1);
-	}
-}
+void checkear_malloc(char* puntero);
 
 /**
- * Termina el programa si el puntero es nulo.
+ * Termina el programa si el puntero 'archivo' es nulo.
  */
-void checkear_fopen(FILE* archivo, const char* const nombre)
-{
-	if (archivo == NULL)
-	{
-		printf("No se pudo cear el archivo %s\n", nombre);
-		exit(-1);
-	}
-}
+void checkear_fopen(FILE* archivo, const char* const nombre);
 
-void imprimir_historial(const char* const nombre_archivo_historial)
-{
-	if (fork() == 0)
-	{
-		char* comando_cat[] = {"cat", nombre_archivo_historial, NULL};
-		execvp(comando_cat[0], comando_cat);
-		perror("No se pudo mostrar el historial\n");
-		exit(-1);
-	}
-	else
-	{
-		wait();
-		printf("\nDone!\n");
-		return;
-	}
-}
+/**
+ * Hace un 'cat' del archivo 'nombre_archivo_historial'.
+ */
+void imprimir_historial(const char* const nombre_archivo_historial);
 
 /**
  * Retorna true si en el arreglo de strings existe un '|'. Retorna false en otro
  * caso. No se toman precauciones si el arreglo no termina con un puntero nulo.
  */
-int buscar_pipe(char** arreglo)
-{
-	int i;
-	for (i = 0; arreglo[i] != NULL; i++)
-	{
-		if (!strcmp(arreglo[i], "|"))
-		{
-			return i;
-		}
-	}
-	return -1;
-}
+int buscar_pipe(char** arreglo);
 
 /**
  * Imprime los strings del arreglo hasta que encuentra nulo.
  */
-void imprimir_arreglo(char** arreglo)
-{
-	int i;
-	for (i = 0; arreglo[i] != NULL; i++)
-	{
-		printf("%s, ", arreglo[i]);
-	}
-	printf("\n");
-}
+void imprimir_arreglo(char** arreglo);
+
 
 int main (int argc, char *argv[])
 {
@@ -351,6 +304,73 @@ int main (int argc, char *argv[])
 		fprintf(mi_shell_log, "%s", string_leida);
 	}
 	return 0;
+}
+
+
+void sigintHandler(int sig_num)
+{
+	signal(SIGINT, sigintHandler);
+	printf("\n Esta shell es demasiado chora, no se puede matar con Ctrl-C\n");
+	printf("%s", PROMPT);
+	fflush(stdout);
+}
+
+void checkear_malloc(char* puntero)
+{
+	if (puntero == NULL)
+	{
+		printf("ERROR AL RESERVAR MEMORIA\n");
+		exit(-1);
+	}
+}
+
+void checkear_fopen(FILE* archivo, const char* const nombre)
+{
+	if (archivo == NULL)
+	{
+		printf("No se pudo cear el archivo %s\n", nombre);
+		exit(-1);
+	}
+}
+
+void imprimir_historial(const char* const nombre_archivo_historial)
+{
+	if (fork() == 0)
+	{
+		char* comando_cat[] = {"cat", nombre_archivo_historial, NULL};
+		execvp(comando_cat[0], comando_cat);
+		perror("No se pudo mostrar el historial\n");
+		exit(-1);
+	}
+	else
+	{
+		wait();
+		printf("\nDone!\n");
+		return;
+	}
+}
+
+int buscar_pipe(char** arreglo)
+{
+	int i;
+	for (i = 0; arreglo[i] != NULL; i++)
+	{
+		if (!strcmp(arreglo[i], "|"))
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+void imprimir_arreglo(char** arreglo)
+{
+	int i;
+	for (i = 0; arreglo[i] != NULL; i++)
+	{
+		printf("%s, ", arreglo[i]);
+	}
+	printf("\n");
 }
 
 //
