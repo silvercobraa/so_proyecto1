@@ -29,7 +29,19 @@ void checkear_malloc(char* puntero)
 	}
 }
 
-void imprimir_historial(const char* nombre_archivo_historial)
+/**
+ * Termina el programa si el puntero es nulo.
+ */
+void checkear_fopen(FILE* archivo, const char* const nombre)
+{
+	if (archivo == NULL)
+	{
+		printf("No se pudo cear el archivo %s\n", nombre);
+		exit(-1);
+	}
+}
+
+void imprimir_historial(const char* const nombre_archivo_historial)
 {
 	if (fork() == 0)
 	{
@@ -148,6 +160,11 @@ int main (int argc, char *argv[])
 	time_t t_inicio;
 	time_t t_fin;
 
+	if (system("mkdir -p Log") == -1)
+	{
+		printf("No se pudo crear la carpeta Log\n");
+		exit(-1);
+	}
 	/**
 	 * En este archivo se escriben los comandos utilizados sus respectivos outputs
 	 * y su tiempo de ejecución.
@@ -159,17 +176,8 @@ int main (int argc, char *argv[])
 	 */
 	FILE* archivo_historial = fopen(NOMBRE_ARCHIVO_HISTORIAL, "w");
 
-	if (mi_shell_log == NULL)
-	{
-		printf("No se pudo crear el archivo Log/%s\n", NOMBRE_ARCHIVO_LOG);
-		exit(-1);
-	}
-	if (NOMBRE_ARCHIVO_HISTORIAL == NULL)
-	{
-		printf("No se pudo crear el archivo %s\n", NOMBRE_ARCHIVO_HISTORIAL);
-		exit(-1);
-	}
-
+	checkear_fopen(mi_shell_log, NOMBRE_ARCHIVO_LOG);
+	checkear_fopen(archivo_historial, NOMBRE_ARCHIVO_HISTORIAL);
 
 	checkear_malloc(string_leida);
 	checkear_malloc(aux);
@@ -208,7 +216,7 @@ int main (int argc, char *argv[])
 			archivo_historial = fopen(NOMBRE_ARCHIVO_HISTORIAL, "a");
 			continue;
 		}
-		fprintf( archivo_historial, "%s", aux);
+		fprintf( archivo_historial, "%s\n", aux);
 		while ((token = strsep(&aux, " ")) != NULL)
 		{
 			tokens[cantidad_tokens] = strdup(token);
