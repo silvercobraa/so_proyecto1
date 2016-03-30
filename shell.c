@@ -87,15 +87,29 @@ int main (int argc, char *argv[])
 										"Ingrese un comando, ingrese 'historial' para ver los comandos previamente usados\ncd" \
 										"o ingrese 'exit' para salir.\n\n";
 
+	/**
+	 * Aquí se guardan los comandos ingresados.
+	 */
 	char* string_leida = malloc(LARGO_MAX_COMANDO);
 
-	const char* const NOMBRE_ARCHIVO_LOG = "mishell.log";
-	const char* const NOMBRE_ARCHIVO_HISTORIAL = ".historial.txt";
 	/**
 	 * Este string es usado para guardar una copia de la string leída, para que
 	 * al usar strsep no se modifique la original.
 	 */
 	char* aux = malloc(LARGO_MAX_COMANDO);
+
+	/**
+	 * En este archivo se escriben los comandos utilizados sus respectivos outputs
+	 * y su tiempo de ejecución.
+	 */
+	FILE* mishell_log = NULL;
+	const char* const NOMBRE_ARCHIVO_LOG = "Log/mishell.log";
+
+	/**
+	 * En este archivo se escriben sólamente los comandos utilizados.
+	 */
+	FILE* archivo_historial = NULL;
+	const char* const NOMBRE_ARCHIVO_HISTORIAL = ".historial.txt";
 
 	/**
 	 * Más uno para incluir un puntero nulo al final (strsep lo exige así).
@@ -118,18 +132,11 @@ int main (int argc, char *argv[])
 		printf("No se pudo crear la carpeta Log\n");
 		exit(-1);
 	}
-	/**
-	 * En este archivo se escriben los comandos utilizados sus respectivos outputs
-	 * y su tiempo de ejecución.
-	 */
-	FILE* mi_shell_log = fopen(NOMBRE_ARCHIVO_LOG, "a+");
 
-	/**
-	 * En este archivo se escriben sólamente los comandos utilizados.
-	 */
-	FILE* archivo_historial = fopen(NOMBRE_ARCHIVO_HISTORIAL, "w");
+	mishell_log = fopen(NOMBRE_ARCHIVO_LOG, "a+");
+	archivo_historial = fopen(NOMBRE_ARCHIVO_HISTORIAL, "w");
 
-	checkear_fopen(mi_shell_log, NOMBRE_ARCHIVO_LOG);
+	checkear_fopen(mishell_log, NOMBRE_ARCHIVO_LOG);
 	checkear_fopen(archivo_historial, NOMBRE_ARCHIVO_HISTORIAL);
 
 	checkear_malloc(string_leida);
@@ -156,7 +163,7 @@ int main (int argc, char *argv[])
 
 		if (!strcmp(aux, "exit"))
 		{
-			fclose(mi_shell_log);
+			fclose(mishell_log);
 			fclose(archivo_historial);
 			free(string_leida);
 			free(aux);
@@ -263,7 +270,7 @@ int main (int argc, char *argv[])
 			//exit(0);
 			//printf("Exito!!!\n");
 			printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
-			fprintf(mi_shell_log, "(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
+			fprintf(mishell_log, "(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
 		}
 
 		/**
@@ -272,6 +279,8 @@ int main (int argc, char *argv[])
 		else if (posicion_pipe == 0)
 		{
 			printf("ERROR: FALTA UN COMANDO\n");
+			cantidad_tokens = 0;
+			continue;
 			//exit(-1);
 		}
 
@@ -297,11 +306,15 @@ int main (int argc, char *argv[])
 			wait();
 			t_fin = time(NULL);
 			printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
-			fprintf(mi_shell_log, "(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
+			fprintf(mishell_log, "(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
 		}
+		//for (j = 0; j < cantidad_tokens; j++)
+		//{
+		//	free(tokens[j]);
+		//}
 		cantidad_tokens = 0;
 		//printf("Valor de i (debiera ser cero): %d\n", i);
-		fprintf(mi_shell_log, "%s", string_leida);
+		fprintf(mishell_log, "%s", string_leida);
 	}
 	return 0;
 }
