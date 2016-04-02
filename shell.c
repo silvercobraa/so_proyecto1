@@ -41,6 +41,10 @@ int buscar_pipe(char** arreglo);
  */
 void imprimir_arreglo(char** arreglo);
 
+/**
+ * Llama al comando rm con argumento 'archivo'.
+ */
+void borrar_archivo(const char* const ruta_archivo);
 
 int main (int argc, char *argv[])
 {
@@ -142,13 +146,14 @@ int main (int argc, char *argv[])
 
 	mishell_log = fopen(NOMBRE_ARCHIVO_LOG, "w");
 	archivo_historial = fopen(NOMBRE_ARCHIVO_HISTORIAL, "w");
-
 	checkear_fopen(mishell_log, NOMBRE_ARCHIVO_LOG);
 	checkear_fopen(archivo_historial, NOMBRE_ARCHIVO_HISTORIAL);
-
+	fflush(mishell_log);
+	fflush(archivo_historial);
+	fclose(mishell_log);
+	fclose(archivo_historial);
 	checkear_malloc(string_leida);
 	checkear_malloc(aux);
-
 
 	printf("%s", MENSAJE_INICIAL);
 	while (1)
@@ -171,20 +176,27 @@ int main (int argc, char *argv[])
 
 		if (!strcmp(aux, "exit"))
 		{
-			fclose(mishell_log);
-			fclose(archivo_historial);
 			free(string_leida);
 			free(aux);
 			exit(-1);
 		}
 		if (!strcmp(aux, "historial"))
 		{
-			fclose(archivo_historial);
+			//fclose(archivo_historial);
 			imprimir_historial(NOMBRE_ARCHIVO_HISTORIAL);
-			archivo_historial = fopen(NOMBRE_ARCHIVO_HISTORIAL, "a");
+			//archivo_historial = fopen(NOMBRE_ARCHIVO_HISTORIAL, "a");
+			//checkear_fopen(archivo_historial);
+			free(aux);
 			continue;
 		}
-		fprintf( archivo_historial, "%s\n", aux);
+		if (!strcmp(aux, "borrar_log"))
+		{
+			borrar_archivo(NOMBRE_ARCHIVO_LOG);
+			borrar_archivo(NOMBRE_ARCHIVO_HISTORIAL);
+			free(aux);
+			continue;
+		}
+
 		while ((token = strsep(&aux, " ")) != NULL)
 		{
 			tokens[cantidad_tokens] = strdup(token);
@@ -193,11 +205,8 @@ int main (int argc, char *argv[])
 		tokens[cantidad_tokens] = NULL;
 		tokens[MAX_TOKENS] = NULL;
 
-
-
 		posicion_pipe = buscar_pipe(tokens);
 
-		//t_inicio = time(NULL);
 		/**
 		 * Si hay pipe, se forkea 2 veces y se ejecutan 2 comandos.
 		 */
@@ -282,10 +291,6 @@ int main (int argc, char *argv[])
 			wait(0);
 			wait(0);
 			t_fin = time(NULL);
-			//exit(0);
-			//printf("Exito!!!\n");
-			//printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
-			//fprintf(mishell_log, "(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
 		}
 
 		/**
@@ -295,8 +300,9 @@ int main (int argc, char *argv[])
 		{
 			printf("ERROR: FALTA UN COMANDO\n");
 			cantidad_tokens = 0;
+			//fclose(mishell_log);
+			//fclose(archivo_historial);
 			continue;
-			//exit(-1);
 		}
 
 		/**
@@ -305,7 +311,6 @@ int main (int argc, char *argv[])
 		else
 		{
 			t_inicio = time(NULL);
-
 			/**
 			 * Proceso hijo que ejecuta el comando, o termina si falla.
 			 */
@@ -322,33 +327,32 @@ int main (int argc, char *argv[])
 			 */
 			wait();
 			t_fin = time(NULL);
-			//printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
-			//fprintf(mishell_log, "(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
 		}
-		//for (j = 0; j < cantidad_tokens; j++)
-		//{
-		//	free(tokens[j]);
-		//}
-		free(aux);
 		cantidad_tokens = 0;
-		//printf("Valor de i (debiera ser cero): %d\n", i);
-
+		free(aux);
 		close(archivo_output);
-		printf("%s", string_leida);
+
+		mishell_log = fopen(NOMBRE_ARCHIVO_LOG, "a");
+		checkear_fopen(mishell_log, NOMBRE_ARCHIVO_LOG);
+		archivo_historial = fopen(NOMBRE_ARCHIVO_HISTORIAL, "a");
+		checkear_fopen(archivo_historial, NOMBRE_ARCHIVO_HISTORIAL);
+
+		fprintf(archivo_historial, "%s", string_leida);
 		fprintf(mishell_log, "%s", string_leida);
+		printf("%s", string_leida);
+
+		// tal vez no es necesaria esta linea
 		fclose(mishell_log);
-		/**
-		 * DEBERÍA REDIRECCIONAR EL OUTPUT DEL COMANDO EJECUTADO A UN TERCER
-		 * ARCHIVO, Y LUEGO COPIAR SU CONTENIDO A STDOUT Y A MISHELL.LOG.
-		 */
 		if (system("tee -a Log/mishell.log < .output.txt") == -1)
 		{
 			printf("Falló tee\n");
 		}
 		mishell_log = fopen(NOMBRE_ARCHIVO_LOG, "a");
 		checkear_fopen(mishell_log, NOMBRE_ARCHIVO_LOG);
-		printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
 		fprintf(mishell_log, "(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
+		printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
+		fclose(mishell_log);
+		fclose(archivo_historial);
 	}
 	return 0;
 }
@@ -375,7 +379,7 @@ void checkear_fopen(FILE* archivo, const char* const nombre)
 {
 	if (archivo == NULL)
 	{
-		printf("No se pudo cear el archivo %s\n", nombre);
+		printf("No se pudo abrir el archivo %s\n", nombre);
 		exit(-1);
 	}
 }
@@ -418,4 +422,21 @@ void imprimir_arreglo(char** arreglo)
 		printf("%s, ", arreglo[i]);
 	}
 	printf("\n");
+}
+
+void borrar_archivo(const char* const ruta_archivo)
+{
+	if (fork() == 0)
+	{
+		char* comando_rm[] = {"rm", ruta_archivo, NULL};
+		execvp(comando_rm[0], comando_rm);
+		perror("No se pudo ejecutar el comando 'rm'\n");
+		exit(-1);
+	}
+	else
+	{
+		wait();
+		printf("\nArchivo %s borrado!\n", ruta_archivo);
+		return;
+	}
 }
