@@ -6,8 +6,9 @@
 #include <sys/types.h>
 #include <stdbool.h>
 #include <signal.h>
+#include <fcntl.h>
 
-const char* const PROMPT = "Shell 100% Real No Fake 1 Link >>> ";
+const char* const PROMPT = "Shell 100%% Real No Fake 1 Link >>> ";
 
 /**
  * Handler de SIGINT.
@@ -110,6 +111,12 @@ int main (int argc, char *argv[])
 	 */
 	FILE* archivo_historial = NULL;
 	const char* const NOMBRE_ARCHIVO_HISTORIAL = ".historial.txt";
+
+	/**
+	 * En este archivo guardo el output de cada comando.
+	 */
+	int archivo_output = -1;
+	const char* const NOMBRE_ARCHIVO_OUTPUT = ".output.txt";
 
 	/**
 	 * Más uno para incluir un puntero nulo al final (strsep lo exige así).
@@ -217,6 +224,12 @@ int main (int argc, char *argv[])
 			printf("COMANDO2: ");
 			imprimir_arreglo(comando2);
 
+			archivo_output = open(NOMBRE_ARCHIVO_OUTPUT, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+			if (archivo_output == -1)
+			{
+				printf("No se pudo crear el archivo 'archivo_output\n'");
+				exit(-1);
+			}
 			/**
 			 * Si falla al crear el pipe, salimos del programa.
 			 */
@@ -233,8 +246,8 @@ int main (int argc, char *argv[])
 			 */
 			if (fork() == 0)            //first fork
 			{
-				close(STDOUT_FILENO);  //closing stdout
-				dup(pipefd[1]);         //replacing stdout with pipe write
+				//close(STDOUT_FILENO);  //closing stdout
+				dup2(pipefd[1], 1);         //replacing stdout with pipe write
 				close(pipefd[0]);       //closing pipe read
 				close(pipefd[1]);
 
@@ -250,7 +263,8 @@ int main (int argc, char *argv[])
 			if (fork() == 0)            //creating 2nd child
 			{
 				close(STDIN_FILENO);   //closing stdin
-				dup(pipefd[0]);         //replacing stdin with pipe read
+				dup2(pipefd[0], 0);         //replacing stdin with pipe read
+				dup2(archivo_output, 1); // reemplazo stdout por el archivo (?)
 				close(pipefd[1]);       //closing pipe write
 				close(pipefd[0]);
 
@@ -322,10 +336,10 @@ int main (int argc, char *argv[])
 		 * DEBERÍA REDIRECCIONAR EL OUTPUT DEL COMANDO EJECUTADO A UN TERCER
 		 * ARCHIVO, Y LUEGO COPIAR SU CONTENIDO A STDOUT Y A MISHELL.LOG.
 		 */
-		//if (system("tee archivo1.txt archivo2.txt") == -1)
-		//{
-		//	printf("Falló tee\n");
-		//}
+		if (system("tee -a Log/mishell.log < .output.txt") == -1)
+		{
+			printf("Falló tee\n");
+		}
 	}
 	return 0;
 }
@@ -396,5 +410,3 @@ void imprimir_arreglo(char** arreglo)
 	}
 	printf("\n");
 }
-
-//
