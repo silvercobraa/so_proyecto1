@@ -284,8 +284,8 @@ int main (int argc, char *argv[])
 			t_fin = time(NULL);
 			//exit(0);
 			//printf("Exito!!!\n");
-			printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
-			fprintf(mishell_log, "(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
+			//printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
+			//fprintf(mishell_log, "(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
 		}
 
 		/**
@@ -311,6 +311,8 @@ int main (int argc, char *argv[])
 			 */
 			if (fork() == 0)
 			{
+				archivo_output = open(NOMBRE_ARCHIVO_OUTPUT, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+				dup2(archivo_output, 1);
 				execvp(tokens[0], tokens);
 				perror("Falló el execvp de tokens");
 				exit(-1);
@@ -320,8 +322,8 @@ int main (int argc, char *argv[])
 			 */
 			wait();
 			t_fin = time(NULL);
-			printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
-			fprintf(mishell_log, "(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
+			//printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
+			//fprintf(mishell_log, "(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
 		}
 		//for (j = 0; j < cantidad_tokens; j++)
 		//{
@@ -330,8 +332,11 @@ int main (int argc, char *argv[])
 		free(aux);
 		cantidad_tokens = 0;
 		//printf("Valor de i (debiera ser cero): %d\n", i);
-		fprintf(mishell_log, "%s", string_leida);
 
+		close(archivo_output);
+		printf("%s", string_leida);
+		fprintf(mishell_log, "%s", string_leida);
+		fclose(mishell_log);
 		/**
 		 * DEBERÍA REDIRECCIONAR EL OUTPUT DEL COMANDO EJECUTADO A UN TERCER
 		 * ARCHIVO, Y LUEGO COPIAR SU CONTENIDO A STDOUT Y A MISHELL.LOG.
@@ -340,6 +345,10 @@ int main (int argc, char *argv[])
 		{
 			printf("Falló tee\n");
 		}
+		mishell_log = fopen(NOMBRE_ARCHIVO_LOG, "a");
+		checkear_fopen(mishell_log, NOMBRE_ARCHIVO_LOG);
+		printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
+		fprintf(mishell_log, "(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
 	}
 	return 0;
 }
