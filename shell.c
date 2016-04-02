@@ -133,7 +133,7 @@ int main (int argc, char *argv[])
 		exit(-1);
 	}
 
-	mishell_log = fopen(NOMBRE_ARCHIVO_LOG, "a+");
+	mishell_log = fopen(NOMBRE_ARCHIVO_LOG, "w");
 	archivo_historial = fopen(NOMBRE_ARCHIVO_HISTORIAL, "w");
 
 	checkear_fopen(mishell_log, NOMBRE_ARCHIVO_LOG);
@@ -152,6 +152,7 @@ int main (int argc, char *argv[])
 
 		if (!strcmp(aux, "\n"))
 		{
+			free(aux);
 			continue;
 		}
 
@@ -312,9 +313,19 @@ int main (int argc, char *argv[])
 		//{
 		//	free(tokens[j]);
 		//}
+		free(aux);
 		cantidad_tokens = 0;
 		//printf("Valor de i (debiera ser cero): %d\n", i);
 		fprintf(mishell_log, "%s", string_leida);
+
+		/**
+		 * DEBERÍA REDIRECCIONAR EL OUTPUT DEL COMANDO EJECUTADO A UN TERCER
+		 * ARCHIVO, Y LUEGO COPIAR SU CONTENIDO A STDOUT Y A MISHELL.LOG.
+		 */
+		//if (system("tee archivo1.txt archivo2.txt") == -1)
+		//{
+		//	printf("Falló tee\n");
+		//}
 	}
 	return 0;
 }
