@@ -97,7 +97,6 @@ int main (int argc, char *argv[])
 	char* comando2[MAX_TOKENS + 1];
 	char* token = NULL;
 
-
 	int cantidad_tokens = 0;
 	int j = 0;
 	int posicion_pipe = -1;
@@ -149,10 +148,7 @@ int main (int argc, char *argv[])
 		}
 		if (!strcmp(aux, "historial"))
 		{
-			//fclose(archivo_historial);
 			imprimir_historial(NOMBRE_ARCHIVO_HISTORIAL);
-			//archivo_historial = fopen(NOMBRE_ARCHIVO_HISTORIAL, "a");
-			//checkear_fopen(archivo_historial);
 			free(aux);
 			continue;
 		}
@@ -220,13 +216,11 @@ int main (int argc, char *argv[])
 			 * Se crea un proceso hijo, que ejecutará el primer comando y
 			 * escribirá en el pipe.
 			 */
-			if (fork() == 0)            //first fork
+			if (fork() == 0)
 			{
-				//close(STDOUT_FILENO);  //closing stdout
-				dup2(pipefd[1], 1);         //replacing stdout with pipe write
-				close(pipefd[0]);       //closing pipe read
+				dup2(pipefd[1], 1);
+				close(pipefd[0]);
 				close(pipefd[1]);
-
 				execvp(comando1[0], comando1);
 				perror("Falló el execvp del comando 1");
 				exit(1);
@@ -236,14 +230,13 @@ int main (int argc, char *argv[])
 			 * Se crea otro proceso hijo, que ejecutará el segundo comando y
 			 * leerá en el pipe.
 			 */
-			if (fork() == 0)            //creating 2nd child
+			if (fork() == 0)
 			{
-				close(STDIN_FILENO);   //closing stdin
-				dup2(pipefd[0], 0);         //replacing stdin with pipe read
-				dup2(archivo_output, 1); // reemplazo stdout por el archivo (?)
-				close(pipefd[1]);       //closing pipe write
+				close(STDIN_FILENO);
+				dup2(pipefd[0], 0);
+				dup2(archivo_output, 1);
+				close(pipefd[1]);
 				close(pipefd[0]);
-
 				execvp(comando2[0], comando2);
 				perror("Falló el execvp del comando 2");
 				exit(1);
@@ -267,8 +260,6 @@ int main (int argc, char *argv[])
 		{
 			printf("ERROR: FALTA UN COMANDO\n");
 			cantidad_tokens = 0;
-			//fclose(mishell_log);
-			//fclose(archivo_historial);
 			continue;
 		}
 
