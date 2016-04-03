@@ -8,7 +8,7 @@
 #include <signal.h>
 #include <fcntl.h>
 
-const char* const PROMPT = "Shell 100%% Real No Fake 1 Link >>> ";
+const char* const PROMPT = "Shell 100% Real No Fake 1 Link >>> ";
 
 /**
  * Handler de SIGINT.
@@ -89,8 +89,10 @@ int main (int argc, char *argv[])
 										"████▌░░░▀┬┼┼┼┼┼┼┼┬▀░░░▐████\n" \
 										"█████▄░░░└┴┴┴┴┴┴┴┘░░░▄█████\n\n" \
 										"Autor: César Bolívar Severino\n\n" \
-										"Ingrese un comando, ingrese 'historial' para ver los comandos previamente usados\ncd" \
-										"o ingrese 'exit' para salir.\n\n";
+										"Ingrese un comando.\n" \
+										"Ingrese 'historial' para ver una lista de comandos previamente usados.\n" \
+										"Ingrese 'borrar_log' para borrar el log.\n" \
+										"Ingrese 'exit' para salir.\n\n";
 
 	/**
 	 * Aquí se guardan los comandos ingresados.
