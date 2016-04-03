@@ -90,3 +90,9 @@ void borrar_archivo(const char* const ruta_archivo)
 		return;
 	}
 }
+
+void buscar_comando(void)
+{
+	printf("No implementado aún :(\n");
+	return;
+}

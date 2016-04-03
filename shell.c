@@ -56,6 +56,7 @@ int main (int argc, char *argv[])
 										"Autor: César Bolívar Severino\n\n" \
 										"Ingrese un comando.\n" \
 										"Ingrese 'historial' para ver una lista de comandos previamente usados.\n" \
+										"Ingrese 'buscar_comando' para buscar un comando en el historial.\n" \
 										"Ingrese 'borrar_log' para borrar el log.\n" \
 										"Ingrese 'exit' para salir.\n\n";
 
@@ -156,6 +157,12 @@ int main (int argc, char *argv[])
 		{
 			borrar_archivo(NOMBRE_ARCHIVO_LOG);
 			borrar_archivo(NOMBRE_ARCHIVO_HISTORIAL);
+			free(aux);
+			continue;
+		}
+		if (!strcmp(aux, "buscar_comando"))
+		{
+			buscar_comando();
 			free(aux);
 			continue;
 		}
