@@ -4,47 +4,12 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <stdbool.h>
+#include <wait.h>
 #include <signal.h>
 #include <fcntl.h>
+#include "funciones.h"
 
 const char* const PROMPT = "Shell 100% Real No Fake 1 Link >>> ";
-
-/**
- * Handler de SIGINT.
- */
-void sigintHandler(int sig_num);
-
-/**
- * Termina el programa si el puntero 'puntero' es nulo.
- */
-void checkear_malloc(char* puntero);
-
-/**
- * Termina el programa si el puntero 'archivo' es nulo.
- */
-void checkear_fopen(FILE* archivo, const char* const nombre);
-
-/**
- * Hace un 'cat' del archivo 'nombre_archivo_historial'.
- */
-void imprimir_historial(const char* const nombre_archivo_historial);
-
-/**
- * Retorna true si en el arreglo de strings existe un '|'. Retorna false en otro
- * caso. No se toman precauciones si el arreglo no termina con un puntero nulo.
- */
-int buscar_pipe(char** arreglo);
-
-/**
- * Imprime los strings del arreglo hasta que encuentra nulo.
- */
-void imprimir_arreglo(char** arreglo);
-
-/**
- * Llama al comando rm con argumento 'archivo'.
- */
-void borrar_archivo(const char* const ruta_archivo);
 
 int main (int argc, char *argv[])
 {
@@ -116,7 +81,7 @@ int main (int argc, char *argv[])
 	 * En este archivo se escriben sólamente los comandos utilizados.
 	 */
 	FILE* archivo_historial = NULL;
-	const char* const NOMBRE_ARCHIVO_HISTORIAL = ".historial.txt";
+	 const char* const NOMBRE_ARCHIVO_HISTORIAL = ".historial.txt";
 
 	/**
 	 * En este archivo guardo el output de cada comando.
@@ -290,8 +255,8 @@ int main (int argc, char *argv[])
 			/**
 			 * Aquí el proceso principal espera que terminen los 2 comandos.
 			 */
-			wait(0);
-			wait(0);
+			wait(NULL);
+			wait(NULL);
 			t_fin = time(NULL);
 		}
 
@@ -327,7 +292,7 @@ int main (int argc, char *argv[])
 			/**
 			 * Proceso principal, que espera al proceso hijo anterior.
 			 */
-			wait();
+			wait(NULL);
 			t_fin = time(NULL);
 		}
 		cantidad_tokens = 0;
@@ -357,88 +322,4 @@ int main (int argc, char *argv[])
 		fclose(archivo_historial);
 	}
 	return 0;
-}
-
-
-void sigintHandler(int sig_num)
-{
-	signal(SIGINT, sigintHandler);
-	printf("\n Esta shell es demasiado chora, no se puede matar con Ctrl-C\n");
-	printf("%s", PROMPT);
-	fflush(stdout);
-}
-
-void checkear_malloc(char* puntero)
-{
-	if (puntero == NULL)
-	{
-		printf("ERROR AL RESERVAR MEMORIA\n");
-		exit(-1);
-	}
-}
-
-void checkear_fopen(FILE* archivo, const char* const nombre)
-{
-	if (archivo == NULL)
-	{
-		printf("No se pudo abrir el archivo %s\n", nombre);
-		exit(-1);
-	}
-}
-
-void imprimir_historial(const char* const nombre_archivo_historial)
-{
-	if (fork() == 0)
-	{
-		char* comando_cat[] = {"cat", nombre_archivo_historial, NULL};
-		execvp(comando_cat[0], comando_cat);
-		perror("No se pudo mostrar el historial\n");
-		exit(-1);
-	}
-	else
-	{
-		wait();
-		printf("\nDone!\n");
-		return;
-	}
-}
-
-int buscar_pipe(char** arreglo)
-{
-	int i;
-	for (i = 0; arreglo[i] != NULL; i++)
-	{
-		if (!strcmp(arreglo[i], "|"))
-		{
-			return i;
-		}
-	}
-	return -1;
-}
-
-void imprimir_arreglo(char** arreglo)
-{
-	int i;
-	for (i = 0; arreglo[i] != NULL; i++)
-	{
-		printf("%s, ", arreglo[i]);
-	}
-	printf("\n");
-}
-
-void borrar_archivo(const char* const ruta_archivo)
-{
-	if (fork() == 0)
-	{
-		char* comando_rm[] = {"rm", ruta_archivo, NULL};
-		execvp(comando_rm[0], comando_rm);
-		perror("No se pudo ejecutar el comando 'rm'\n");
-		exit(-1);
-	}
-	else
-	{
-		wait();
-		printf("\nArchivo %s borrado!\n", ruta_archivo);
-		return;
-	}
 }
