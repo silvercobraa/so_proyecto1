@@ -4,60 +4,12 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <stdbool.h>
+#include <wait.h>
 #include <signal.h>
+#include <fcntl.h>
+#include "funciones.h"
 
 const char* const PROMPT = "Shell 100% Real No Fake 1 Link >>> ";
-
-void sigintHandler(int sig_num)
-{
-	signal(SIGINT, sigintHandler);
-	printf("\n Esta shell es demasiado chora, no se puede matar con Ctrl-C\n");
-	printf("%s", PROMPT);
-	fflush(stdout);
-}
-
-/**
- * Termina el programa si el puntero es nulo.
- */
-void checkear_malloc(char* puntero)
-{
-	if (puntero == NULL)
-	{
-		printf("ERROR AL RESERVAR MEMORIA\n");
-		exit(-1);
-	}
-}
-
-/**
- * Retorna true si en el arreglo de strings existe un '|'. Retorna false en otro
- * caso. No se toman precauciones si el arreglo no termina con un puntero nulo.
- */
-int buscar_pipe(char** arreglo)
-{
-	int i;
-	for (i = 0; arreglo[i] != NULL; i++)
-	{
-		if (!strcmp(arreglo[i], "|"))
-		{
-			return i;
-		}
-	}
-	return -1;
-}
-
-/**
- * Imprime los strings del arreglo hasta que encuentra nulo.
- */
-void imprimir_arreglo(char** arreglo)
-{
-	int i;
-	for (i = 0; arreglo[i] != NULL; i++)
-	{
-		printf("%s, ", arreglo[i]);
-	}
-	printf("\n");
-}
 
 int main (int argc, char *argv[])
 {
@@ -66,7 +18,7 @@ int main (int argc, char *argv[])
 	/**
 	 * Incluyendo el caracter nulo.
 	 */
-	int LARGO_MAX_COMANDO = 1000;
+	const int LARGO_MAX_COMANDO = 1000;
 
 	/**
 	 * La cantidad máxima de palabras que puede haber es la cantidad de
@@ -80,13 +32,42 @@ int main (int argc, char *argv[])
 										"\\___ \\| '_ \\ / _ \\ | | | | | | | | | |/ /  | |_) / _ \\/ _` | | |  \\| |/ _ \\ \n" \
 										" ___) | | | |  __/ | | | | |_| | |_| / /_  |  _ <  __/ (_| | | | |\\  | (_) |\n" \
 										"|____/|_| |_|\\___|_|_| |_|\\___/ \\___/_/(_) |_| \\_\\___|\\__,_|_| |_| \\_|\\___/ \n" \
-										"										                                    \n" \
+<<<<<<< HEAD
+=======
+>>>>>>> log
 										" _____     _        \n" \
 										"|  ___|_ _| | _____ \n" \
 										"| |_ / _` | |/ / _ \\\n" \
 										"|  _| (_| |   <  __/\n" \
 										"|_|  \\__,_|_|\\_\\___|\n\n" \
+<<<<<<< HEAD
                     					"Autor: César Bolívar Severino\n\nIngrese un comando o ingrese 'exit' para salir.\n\n";
+=======
+										"███████▀▀▀░░░░░░░▀▀▀███████\n" \
+										"████▀░░░░░░░░░░░░░░░░░▀████\n" \
+										"███│░░░░░░░░░░░░░░░░░░░│███\n" \
+										"██▌│░░░░░░░░░░░░░░░░░░░│▐██\n" \
+										"██░└┐░░░░░░░░░░░░░░░░░┌┘░██\n" \
+										"██░░└┐░░░░░░░░░░░░░░░┌┘░░██\n" \
+										"██░░┌┘▄▄▄▄▄░░░░░▄▄▄▄▄└┐░░██\n" \
+										"██▌░│██████▌░░░▐██████│░▐██\n" \
+										"███░│▐███▀▀░░▄░░▀▀███▌│░███\n" \
+										"██▀─┘░░░░░░░▐█▌░░░░░░░└─▀██\n" \
+										"██▄░░░▄▄▄▓░░▀█▀░░▓▄▄▄░░░▄██\n" \
+										"████▄─┘██▌░░░░░░░▐██└─▄████\n" \
+										"█████░░▐█─┬┬┬┬┬┬┬─█▌░░█████\n" \
+										"████▌░░░▀┬┼┼┼┼┼┼┼┬▀░░░▐████\n" \
+										"█████▄░░░└┴┴┴┴┴┴┴┘░░░▄█████\n\n" \
+										"Autor: César Bolívar Severino\n\n" \
+										"Ingrese un comando.\n" \
+										"Ingrese 'historial' para ver una lista de comandos previamente usados.\n" \
+										"Ingrese 'borrar_log' para borrar el log.\n" \
+										"Ingrese 'exit' para salir.\n\n";
+
+	/**
+	 * Aquí se guardan los comandos ingresados.
+	 */
+>>>>>>> log
 	char* string_leida = malloc(LARGO_MAX_COMANDO);
 
 	/**
@@ -96,23 +77,53 @@ int main (int argc, char *argv[])
 	char* aux = malloc(LARGO_MAX_COMANDO);
 
 	/**
+	 * En este archivo se escriben los comandos utilizados sus respectivos outputs
+	 * y su tiempo de ejecución.
+	 */
+	FILE* mishell_log = NULL;
+	const char* const NOMBRE_ARCHIVO_LOG = "Log/mishell.log";
+
+	/**
+	 * En este archivo se escriben sólamente los comandos utilizados.
+	 */
+	FILE* archivo_historial = NULL;
+	 const char* const NOMBRE_ARCHIVO_HISTORIAL = ".historial.txt";
+
+	/**
+	 * En este archivo guardo el output de cada comando.
+	 */
+	int archivo_output = -1;
+	const char* const NOMBRE_ARCHIVO_OUTPUT = ".output.txt";
+
+	/**
 	 * Más uno para incluir un puntero nulo al final (strsep lo exige así).
 	 */
 	char* tokens[MAX_TOKENS + 1];
 	char* comando1[MAX_TOKENS + 1];
 	char* comando2[MAX_TOKENS + 1];
-
 	char* token = NULL;
 
-	int i = 0;
+	int cantidad_tokens = 0;
 	int j = 0;
 	int posicion_pipe = -1;
-	int des_p[2];
+	int pipefd[2];
 	time_t t_inicio;
 	time_t t_fin;
 
-	//pid_t pid;
+	if (system("mkdir -p Log") == -1)
+	{
+		printf("No se pudo crear la carpeta Log\n");
+		exit(-1);
+	}
 
+	mishell_log = fopen(NOMBRE_ARCHIVO_LOG, "w");
+	archivo_historial = fopen(NOMBRE_ARCHIVO_HISTORIAL, "w");
+	checkear_fopen(mishell_log, NOMBRE_ARCHIVO_LOG);
+	checkear_fopen(archivo_historial, NOMBRE_ARCHIVO_HISTORIAL);
+	fflush(mishell_log);
+	fflush(archivo_historial);
+	fclose(mishell_log);
+	fclose(archivo_historial);
 	checkear_malloc(string_leida);
 	checkear_malloc(aux);
 
@@ -125,6 +136,7 @@ int main (int argc, char *argv[])
 
 		if (!strcmp(aux, "\n"))
 		{
+			free(aux);
 			continue;
 		}
 
@@ -136,21 +148,34 @@ int main (int argc, char *argv[])
 
 		if (!strcmp(aux, "exit"))
 		{
+			free(string_leida);
+			free(aux);
 			exit(-1);
 		}
+		if (!strcmp(aux, "historial"))
+		{
+			imprimir_historial(NOMBRE_ARCHIVO_HISTORIAL);
+			free(aux);
+			continue;
+		}
+		if (!strcmp(aux, "borrar_log"))
+		{
+			borrar_archivo(NOMBRE_ARCHIVO_LOG);
+			borrar_archivo(NOMBRE_ARCHIVO_HISTORIAL);
+			free(aux);
+			continue;
+		}
+
 		while ((token = strsep(&aux, " ")) != NULL)
 		{
-			tokens[i] = strdup(token);
-			i++;
+			tokens[cantidad_tokens] = strdup(token);
+			cantidad_tokens++;
 		}
-		tokens[i] = NULL;
+		tokens[cantidad_tokens] = NULL;
 		tokens[MAX_TOKENS] = NULL;
-
-
 
 		posicion_pipe = buscar_pipe(tokens);
 
-		//t_inicio = time(NULL);
 		/**
 		 * Si hay pipe, se forkea 2 veces y se ejecutan 2 comandos.
 		 */
@@ -177,18 +202,16 @@ int main (int argc, char *argv[])
 			printf("COMANDO2: ");
 			imprimir_arreglo(comando2);
 
-			// aqui habria que volver a forkear para poder usar los pipes. De
-			// momento solo se ejecutara el primer comando.
-			//printf("(pipes aún no implementados, se ejecutará solo el primer comando)\n");
-			//if (execvp(comando1[0], comando1) == -1)
-			//{
-			//	exit(-1);
-			//}}
-
+			archivo_output = open(NOMBRE_ARCHIVO_OUTPUT, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+			if (archivo_output == -1)
+			{
+				printf("No se pudo crear el archivo 'archivo_output\n'");
+				exit(-1);
+			}
 			/**
 			 * Si falla al crear el pipe, salimos del programa.
 			 */
-			if(pipe(des_p) == -1)
+			if (pipe(pipefd) == -1)
 			{
 				perror("Falló el pipe");
 				exit(1);
@@ -199,13 +222,11 @@ int main (int argc, char *argv[])
 			 * Se crea un proceso hijo, que ejecutará el primer comando y
 			 * escribirá en el pipe.
 			 */
-			if(fork() == 0)            //first fork
+			if (fork() == 0)
 			{
-				close(STDOUT_FILENO);  //closing stdout
-				dup(des_p[1]);         //replacing stdout with pipe write
-				close(des_p[0]);       //closing pipe read
-				close(des_p[1]);
-
+				dup2(pipefd[1], 1);
+				close(pipefd[0]);
+				close(pipefd[1]);
 				execvp(comando1[0], comando1);
 				perror("Falló el execvp del comando 1");
 				exit(1);
@@ -215,30 +236,27 @@ int main (int argc, char *argv[])
 			 * Se crea otro proceso hijo, que ejecutará el segundo comando y
 			 * leerá en el pipe.
 			 */
-			if(fork() == 0)            //creating 2nd child
+			if (fork() == 0)
 			{
-				close(STDIN_FILENO);   //closing stdin
-				dup(des_p[0]);         //replacing stdin with pipe read
-				close(des_p[1]);       //closing pipe write
-				close(des_p[0]);
-
+				close(STDIN_FILENO);
+				dup2(pipefd[0], 0);
+				dup2(archivo_output, 1);
+				close(pipefd[1]);
+				close(pipefd[0]);
 				execvp(comando2[0], comando2);
 				perror("Falló el execvp del comando 2");
 				exit(1);
 			}
 
-			close(des_p[0]);
-			close(des_p[1]);
+			close(pipefd[0]);
+			close(pipefd[1]);
 
 			/**
 			 * Aquí el proceso principal espera que terminen los 2 comandos.
 			 */
-			wait(0);
-			wait(0);
+			wait(NULL);
+			wait(NULL);
 			t_fin = time(NULL);
-			//exit(0);
-			printf("Exito!!!\n");
-			printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
 		}
 
 		/**
@@ -247,22 +265,9 @@ int main (int argc, char *argv[])
 		else if (posicion_pipe == 0)
 		{
 			printf("ERROR: FALTA UN COMANDO\n");
-			//exit(-1);
+			cantidad_tokens = 0;
+			continue;
 		}
-		//else
-		//{
-		//	printf("(Si esto se ejecuta es porque el string no contenía pipes.)\n");
-		//	if (execvp(tokens[0], tokens) == -1)
-		//	{
-		//		printf("ERROR: comando no reconocido (Si se imprime esto es porque execvp retornó -1)\n");
-//
-		//		/**
-		//		 * Si falla hay que salir del programa porque si no el proceso
-		//		 * hijo queda ahí incluso cuando el programa originial termina.
-		//		 */
-		//		exit(-1);
-		//	}
-		//}
 
 		/**
 		 * Si no hay pipe, se ejecuta el comando completo.
@@ -270,12 +275,13 @@ int main (int argc, char *argv[])
 		else
 		{
 			t_inicio = time(NULL);
-
 			/**
 			 * Proceso hijo que ejecuta el comando, o termina si falla.
 			 */
 			if (fork() == 0)
 			{
+				archivo_output = open(NOMBRE_ARCHIVO_OUTPUT, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+				dup2(archivo_output, 1);
 				execvp(tokens[0], tokens);
 				perror("Falló el execvp de tokens");
 				exit(-1);
@@ -283,13 +289,34 @@ int main (int argc, char *argv[])
 			/**
 			 * Proceso principal, que espera al proceso hijo anterior.
 			 */
-			wait();
+			wait(NULL);
 			t_fin = time(NULL);
-			printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
 		}
-		i = 0;
+		cantidad_tokens = 0;
+		free(aux);
+		close(archivo_output);
+
+		mishell_log = fopen(NOMBRE_ARCHIVO_LOG, "a");
+		checkear_fopen(mishell_log, NOMBRE_ARCHIVO_LOG);
+		archivo_historial = fopen(NOMBRE_ARCHIVO_HISTORIAL, "a");
+		checkear_fopen(archivo_historial, NOMBRE_ARCHIVO_HISTORIAL);
+
+		fprintf(archivo_historial, "%s", string_leida);
+		fprintf(mishell_log, "%s", string_leida);
+		printf("%s", string_leida);
+
+		// tal vez no es necesaria esta linea
+		fclose(mishell_log);
+		if (system("tee -a Log/mishell.log < .output.txt") == -1)
+		{
+			printf("Falló tee\n");
+		}
+		mishell_log = fopen(NOMBRE_ARCHIVO_LOG, "a");
+		checkear_fopen(mishell_log, NOMBRE_ARCHIVO_LOG);
+		fprintf(mishell_log, "(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
+		printf("(tiempo de ejecución: %ld s)\n", t_fin - t_inicio);
+		fclose(mishell_log);
+		fclose(archivo_historial);
 	}
 	return 0;
 }
-
-//
