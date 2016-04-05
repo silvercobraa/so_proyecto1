@@ -157,6 +157,7 @@ int main (int argc, char *argv[])
 		{
 			borrar_archivo(NOMBRE_ARCHIVO_LOG);
 			borrar_archivo(NOMBRE_ARCHIVO_HISTORIAL);
+			printf("Log borrado!\n");
 			free(aux);
 			continue;
 		}
@@ -282,6 +283,11 @@ int main (int argc, char *argv[])
 			if (fork() == 0)
 			{
 				archivo_output = open(NOMBRE_ARCHIVO_OUTPUT, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+				if (archivo_output == -1)
+				{
+					printf("No se pudo crear el archivo 'archivo_output\n'");
+					exit(-1);
+				}
 				dup2(archivo_output, 1);
 				execvp(tokens[0], tokens);
 				perror("Falló el execvp de tokens");
