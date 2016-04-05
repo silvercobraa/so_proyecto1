@@ -306,7 +306,6 @@ int main (int argc, char *argv[])
 		fprintf(mishell_log, "%s", string_leida);
 		printf("%s", string_leida);
 
-		// tal vez no es necesaria esta linea
 		fclose(mishell_log);
 		if (system("tee -a Log/mishell.log < .output.txt") == -1)
 		{

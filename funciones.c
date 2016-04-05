@@ -46,7 +46,6 @@ void imprimir_historial(const char* const nombre_archivo_historial)
 	else
 	{
 		wait(NULL);
-		printf("\nDone!\n");
 		return;
 	}
 }
@@ -86,7 +85,6 @@ void borrar_archivo(const char* const ruta_archivo)
 	else
 	{
 		wait(NULL);
-		printf("\nArchivo %s borrado!\n", ruta_archivo);
 		return;
 	}
 }
