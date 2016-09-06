@@ -33,3 +33,8 @@ void imprimir_arreglo(char** arreglo);
  * Llama al comando rm con argumento 'archivo'.
  */
 void borrar_archivo(const char* const ruta_archivo);
+
+/**
+ * Busca un comando en la lista de comandos usados en la sesión.
+ */
+void buscar_comando(void);
