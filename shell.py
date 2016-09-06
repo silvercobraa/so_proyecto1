@@ -4,22 +4,24 @@
 import os
 import sys
 
-prompt = "Shell 100% Real No Fake 1 Link >>> "
-buff = ""
+MENSAJE_INICIAL = "Microsoft Windows [Version 10.0.10240]\n(c) 2015 Microsoft Windows Corporation. All rights reserved.\n"
+PROMPT = "C:\\WINDOWS\\system32> "
+
+print(MENSAJE_INICIAL)
 
 while (True):
 	try:
-		buff = input(prompt)
+		buff = input(PROMPT)
 	except EOFError as eofe:
-		print("") # se imprime un salto de linea para que la prompt de la shell no quede fea
+		# se imprime un salto de linea para que la prompt de la shell no quede fea
+		print("")
 		exit()
+
 	commands = buff.split("|")
-	# print("comandos: " + str(commands))
 	previous_pipe = None
 	current_pipe = None
 
 	for i, cmd in enumerate(commands):
-
 		if i != len(commands) - 1:
 			current_pipe = os.pipe()
 
@@ -28,17 +30,12 @@ while (True):
 			# caso especial primer proceso
 			if i != 0:
 				os.dup2(previous_pipe[0], 0)
-				# os.close(pipes[i - 1][0])
-				# os.close(pipes[i - 1][1])
 
 			# caso especial último proceso
 			if i != len(commands) - 1:
 				os.dup2(current_pipe[1], 1)
-				# os.close(pipes[i][0])
-				# os.close(pipes[i][1])
 
 			arguments = cmd.split()
-			print("argumentos: " + str(arguments), file=sys.stderr)
 			os.execvp(arguments[0], arguments)
 		else:
 			if i != 0:
@@ -46,6 +43,4 @@ while (True):
 				os.close(previous_pipe[0])
 				os.close(previous_pipe[1])
 			os.wait()
-			print(previous_pipe)
-			print(current_pipe)
 			previous_pipe = current_pipe
