@@ -35,33 +35,37 @@ int main(int argc, char const* argv[])
 	int pipes[CANTIDAD_COMANDOS - 1][2];
 	char* comandos[CANTIDAD_COMANDOS][CANTIDAD_COMANDOS] = {{"ls", "-l", NULL}, {"sort", "-r", NULL}, {"wc", NULL, NULL}};
     pid_t pid;
-    for (int i = 0; i < CANTIDAD_COMANDOS; i++)
-    {
-        for (int j = 0; j < CANTIDAD_COMANDOS; j++)
-        {
-            if (comandos[i][j] == NULL)
-            {
-                printf("NULL! ");
-            }
-            else
-            {
-                printf("%s ", comandos[i][j]);
-            }
-        }
-        printf("\n");
-    }
+    // for (int i = 0; i < CANTIDAD_COMANDOS; i++)
+    // {
+    //     for (int j = 0; j < CANTIDAD_COMANDOS; j++)
+    //     {
+    //         if (comandos[i][j] == NULL)
+    //         {
+    //             printf("NULL! ");
+    //         }
+    //         else
+    //         {
+    //             printf("%s ", comandos[i][j]);
+    //         }
+    //     }
+    //     printf("\n");
+    // }
 	for (int i = 0; i < CANTIDAD_COMANDOS; i++)
 	{
+        // el último comando no requiere crear un pipe
 		if (i != CANTIDAD_COMANDOS - 1)
 		{
             fprintf(stderr, "abriendo pipe %d...\n", i);
 			pipe(&pipes[i][0]);
 		}
+
         fprintf(stderr, "forkeando...\n");
 		pid = fork();
 
+        // PROCESO HIJO
 		if (pid == 0)
 		{
+            // el primer comando no puede leer el pipe anterior, pues no existe
 			if (i != 0)
 			{
 				dup2(pipes[i - 1][0], 0);
@@ -72,6 +76,7 @@ int main(int argc, char const* argv[])
                 fprintf(stderr, "[H%d] cerrando pipe[%d][%d]...\n", i, i - 1, 1);
             }
 
+            // el último comando no puede escribir en el pipe siguiente, pues no existe
 			if (i != CANTIDAD_COMANDOS - 1)
 			{
 				close(pipes[i][0]);
@@ -88,8 +93,10 @@ int main(int argc, char const* argv[])
                 exit(EXIT_FAILURE);
             }
 		}
+        // PROCESO PADRE
 		else
 		{
+            // se cierra el pipe anterior, a excepción del primer comando. Se espera al proceso hijo
 			if (i != 0)
 			{
 				close(pipes[i - 1][0]);
