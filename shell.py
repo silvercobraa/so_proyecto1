@@ -2,7 +2,8 @@
 # coding=utf-8
 
 import os
-import subprocess
+import sys
+# import subprocess
 
 prompt = "Shell 100% Real No Fake 1 Link >>> "
 buff = ""
@@ -16,36 +17,32 @@ while (True):
 	commands = buff.split("|")
 	pipes = [None for c in range(len(commands) - 1)]
 	print("comandos: " + str(commands))
-	# print("pipes: " + str(pipes))
+	print("pipes: " + str(pipes))
+	# old_pipe = None
 
-	for command in commands:
+	for i, command in enumerate(commands):
 
-		# if i != len(commands) - 1:
-		# 	pipes[i] = os.pipe()
+		if i != len(commands) - 1:
+			pipes[i] = os.pipe()
 
 		pid = os.fork()
 		if pid == 0:
-			# if i != 0:
-			# 	os.dup2(pipes[i - 1][0], 0)
-			# if i != len(commands) - 1:
-			# 	os.dup2(pipes[i][1], 1)
+			if i != 0:
+				os.dup2(pipes[i - 1][0], 0)
+				# os.close(pipes[i - 1][0])
+				# os.close(pipes[i - 1][1])
+			if i != len(commands) - 1:
+				os.dup2(pipes[i][1], 1)
+				# os.close(pipes[i][0])
+				# os.close(pipes[i][1])
 
-			# arguments = commands[i].split()
 			arguments = command.split()
-			print("argumentos: " + str(arguments))
-			# ejecutar comando
+			# arguments = command.split()
+			print("argumentos: " + str(arguments), file=sys.stderr)
 			os.execvp(arguments[0], arguments)
 		else:
+			if i != 0:
+				# No se si cerrar los pipes en el proceso hijo es necesario, pero en el padre si
+				os.close(pipes[i - 1][0])
+				os.close(pipes[i - 1][1])
 			os.wait()
-
-	# os.wait()
-# cmd1 = ["ls", "-l"]
-# cmd2 = ["wc"]
-# p = os.pipe()
-# pid = os.fork()
-# if pid == 0:
-# 	os.dup2(p[1], 1)
-# 	os.execvp(cmd1[0], cmd1)
-# else:
-# 	os.dup2(p[0], 0)
-# 	os.execvp(cmd2[0], cmd2)
